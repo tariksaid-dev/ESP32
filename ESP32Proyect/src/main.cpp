@@ -4,6 +4,7 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <ArduinoJson.h>
+#include <HTTPClient.h>
 
 const char *ssid = "DIGIFIBRA-sZu6";
 const char *password = "UybNPKTy5Z";
@@ -30,7 +31,7 @@ String mainPage =
   "<body>\n"
   "<h1>ESP32 Proyecto Hlanz</h1>\n"
   "<h3>Modo Servidor Local</h3>\n"
-  "<p>Recibir horario de Luz</p><a class=\"button button-on\" href=\"#\">LEER</a>\n";
+  "<p>Recibir horario de Luz</p><a class=\"button button-on\" href=\"https://api.preciodelaluz.org/v1/prices/now?zone=PCB\">LEER</a>\n";
 
 void handleRoot()
 {
@@ -59,7 +60,28 @@ void handleNotFound()
   digitalWrite(led, 0);
 }
 
+// funcion para leer el horario de luz, ahora, no asignada
+void precio()
+{
+    if(WiFi.status() == WL_CONNECTED){
 
+    HTTPClient http;
+    http.begin("https://api.preciodelaluz.org/v1/prices/now?zone=PCB");
+    int httpCode = http.GET();
+
+    if(httpCode > 0) {
+      String payload = http.getString();
+      Serial.println(payload);
+      Serial.println(payload);
+
+    } else {
+      Serial.println("Error en la petición");
+    }
+
+    http.end();
+    delay(10000);
+  }
+}
 
 // setup del wifi?
 void setup(void)
