@@ -17,6 +17,11 @@ def make_request(url):
         datos_ordenados = sorted(datos.items())
         prices = [precio for hora, precio in datos_ordenados]
         prices_str = list(map(str, prices))
+        print(datos)
+        print("--------------------------")
+        print(datos_ordenados)
+        print("--------------------------")
+        print(prices_str)
     else:
         print("Error, no se pudieron cargar los datos")
         
@@ -30,6 +35,13 @@ def get_hora(url):
     else:
         print("Error en la API, no se pudo obtener la hora")
 
+def array_mas_baratos(valor):
+    elementos = prices_str
+    elementos_ordenados = sorted([float(p) for p in elementos])
+    elementos_baratos = elementos_ordenados[:int(valor)]
+    elementos_baratos_str = [str(p) for p in elementos_baratos]
+    return elementos_baratos_str
+
 def web_page():
   html = """<!DOCTYPE html>
 <html lang="en">
@@ -38,40 +50,6 @@ def web_page():
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ESP32 Luz</title>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-
-        // Obtenemos los elementos del DOM
-        const display = document.querySelector('.display');
-      const incrementButton = document.querySelector('.button-increment');
-      const decrementButton = document.querySelector('.button-decrement');
-
-      // Establecemos la cantidad inicial en 0
-      let cantidad = 0;
-      
-      // Función que se llama cuando se hace clic en el botón de suma
-      function incrementar() {
-        cantidad++;
-        if (cantidad > 24) {
-          cantidad = 24;
-        }
-        display.textContent = cantidad;
-      }
-      
-      // Función que se llama cuando se hace clic en el botón de resta
-      function decrementar() {
-        cantidad--;
-        if (cantidad < 0) {
-          cantidad = 0;
-        }
-        display.textContent = cantidad;
-      }
-      
-      // Agregamos los listeners de eventos a los botones
-      incrementButton.addEventListener('click', incrementar);
-      decrementButton.addEventListener('click', decrementar);
-    });
-      </script>
     <style>
 
       .titulo {
@@ -135,6 +113,10 @@ def web_page():
         justify-content: center;
         align-items: center;
       }
+
+      .square:hover {
+        cursor: pointer;
+      }
       
       .horas {
         display: grid;
@@ -197,6 +179,15 @@ def web_page():
       .precio {
         font-size: 25px;
         font-weight: bold;
+      }
+
+      .color-selected {
+        background-color: #96e289;
+        border: 3px solid black;
+      }
+
+      .border {
+        border: 3px solid black;
       }
     </style>
   </head>"""
@@ -364,19 +355,149 @@ def web_page():
     </div>
     <div class="container">
       <div class="container-automatico">
-        <button class="button">Automático</button>
+        <button class="button" id="modo_automatico">Automático</button>
         <div class="display">0</div>
         <div class="botones-auto">
           <button class="button-increment"><b>+</b></button>
           <button class="button-decrement"><b>-</b></button>
         </div>
       </div>
-      <button class="button button2">Semi-automático</button>
-      <button class="button button3">Manual</button>
-    </div>
+      <button class="button button2" id="modo_semiautomatico">Semi-automático</button>
+      <button class="button button3" id="modo_manual">Manual</button>
+    </div> """
+  html += """
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Elementos del DOM
+        const display = document.querySelector('.display');
+        const incrementButton = document.querySelector('.button-increment');
+        const decrementButton = document.querySelector('.button-decrement');
+        const modoAutomaticoButton = document.getElementById("modo_automatico");
+        const modoManualButton = document.getElementById("modo_manual");
+        const modoSemiAutomaticoButton = document.getElementById("modo_semiautomatico");
+
+        // Función para reiniciar los colores de cada square. Deberá ser implementada en cada botón para no crear confusión al cambiar de modos.
+        function resetSelection() {
+            precios_manual = []
+            const squares = document.querySelectorAll('.square');
+            squares.forEach((square) => {
+                square.classList.remove('color-selected');
+            })
+        }
+
+
+        // Función seleccionar precios más baratos automático
+        // También añade un borde al botón auto
+        function precios_baratos_automatico(valor) {
+          // reiniciamos el array referente a la selección de precio manual además de limpiar colores
+          resetSelection();
+          let elementos = document.querySelectorAll('.precio');
+          let precios = []
+          elementos.forEach((el) => {
+            precios.push(parseFloat(el.innerText));
+          });
+          let precios_ordenados = precios.sort((a, b) => a - b);
+          let precios_baratos = precios_ordenados.slice(0, valor);
+          elementos.forEach((el) => {
+            let precio = parseFloat(el.innerText);
+            if(precios_baratos.includes(precio)) {
+                el.parentNode.classList.add('color-selected');
+            } else {
+                el.parentNode.classList.remove('color-selected');
+            }});
+        modoAutomaticoButton.classList.add('border');
+        modoSemiAutomaticoButton.classList.remove('border');
+        modoManualButton.classList.remove('border');
+        }
+
+        // Función semiautomática
+        // Por el momento, clicar solo le añade borde y se lo quita a los otros dos
+        function precios_semiautomaticos() {
+            resetSelection();
+            modoSemiAutomaticoButton.classList.add('border');
+            modoAutomaticoButton.classList.remove('border');
+            modoManualButton.classList.remove('border');
+        }
+
+        // Función manual
+        // La dejaremos en un contexto global para mejorar la accesibilidad al usuario. Será la "por defecto". Cada vez que clickes en un número, pasaremos al modo manual.
+        let precios_manual = [];
+        function precios_manuales() {
+            let squares = document.querySelectorAll('.square');
+            squares.forEach((square) => {
+                square.addEventListener('click', () => {
+                    modoManualButton.classList.add('border');
+                    modoAutomaticoButton.classList.remove('border');
+                    modoSemiAutomaticoButton.classList.remove('border');
+                    
+                    const precio = square.querySelector('.precio').innerText;
+                    const index = precios_manual.indexOf(parseFloat(precio));
+                    if(index > -1) {
+                        precios_manual.splice(index, 1);
+                        square.classList.remove('color-selected');
+                    } else {
+                        precios_manual.push(parseFloat(precio));
+                        square.classList.add('color-selected');
+                    }
+                    console.log(precios_manual);
+                });
+            });
+            console.log(precios_manual);
+        }
+        precios_manuales();
+
+        // Funcionalidad +/- en display
+        // Variable cantidad, que siempre es la misma que el display en pantalla
+        let cantidad = 0;
+        function incrementar() {
+          cantidad++;
+          if (cantidad > 24) {
+            cantidad = 24;
+          }
+          display.textContent = cantidad;
+        }
+        function decrementar() {
+          cantidad--;
+          if (cantidad < 0) {
+            cantidad = 0;
+          }
+          display.textContent = cantidad;
+        }
+
+        // Fetch functions
+        function modo_automatico() {
+          // ahora mismo solo mando el número de horas que selecciona el usuario. Podría mandar el array ya hecho 
+          fetch(`/modo_automatico?value=${cantidad}`, {method: 'GET'});
+          precios_baratos_automatico(cantidad);
+        }
+
+        function modo_manual() {
+            // Podemos hacer /modo_manual?value=${precios.join(',')}
+          fetch(`/modo_manual?value=0`, {method: 'GET'});
+        }
+
+        function modo_semiautomatico() {
+          fetch(`/modo_semiautomico?value=0`, {method: 'GET'});
+          precios_semiautomaticos();
+        }
+    
+        // Listeners
+        incrementButton.addEventListener('click', incrementar);
+        decrementButton.addEventListener('click', decrementar);
+        modoAutomaticoButton.addEventListener('click', modo_automatico);
+        modoManualButton.addEventListener('click', modo_manual);
+        modoSemiAutomaticoButton.addEventListener('click', modo_semiautomatico);
+      });
+
+    // Si quiero un autorefresh de la página: 
+    //   setTimeout(function(){
+    //     location.reload();
+    //     }, 6000);
+    </script>
   </body>
 </html>
 """
+
   return html
 
 
@@ -389,41 +510,54 @@ print("Socket creado correctamente")
 # Api de semi/pago, cambiar en producto final o pagar 9$ mes para uso ilimitado
 URL_API_HORA = "https://timezone.abstractapi.com/v1/current_time/?api_key=1efba11478714b6599e5d95b2b0762f1&location=Madrid,%Spain"
 URL_API_LUZ = "https://api.preciodelaluz.org/v1/prices/all?zone=PCB"
-INTERVALO = 6000
+INTERVALO = 15000
 
+ultima_actualizacion = time.ticks_ms()
 hora_ultima_actualizacion = ""
 precio_medio = 0
 datos = {}
 prices_str = ['0'] * 24
-# Obtener los precios como floats y ordenarlos
-precios_float = sorted([float(p) for p in prices_str])
-
-# Seleccionar los 5 precios más baratos
-precios_baratos = precios_float[:5]
 
 
-
-
-
-ultima_actualizacion = time.ticks_ms()
 
 while True:
+    
     ready_to_read, _, _ = select.select([s], [], [], 1)
     if s in ready_to_read:
         conn, addr = s.accept()
         print(f'Se ha conectado al socket {addr}')
-        request = conn.recv(1024)
-        response = web_page()
-        conn.send('HTTP/1.1 200 OK\n')
-        conn.send('Content-Type: text/html\n')
-        conn.send('Connection: close\n\n')
-        conn.sendall(response)
-        conn.close()
+        request = conn.recv(1024).decode()
+        if 'GET /modo_automatico' in request:
+            valor = request.split('=')[1].split(' ')[0]
+            # Aquí implementamos las funcionalidades dle modo automático. Array disponible con el
+            #método de la siguiente línea para obtener los datos más baratos. Valor sale del display que
+            # tenemos al lado del modo automático. 
+            # machine.tirarluz al GPIO X las horas Y
+            # Para saber las horas, tendremos que buscarlas en el array de turno.
+            # Es posible que, para llevar un track de la hora, tengamos que o actualizar la hora del sistema con
+            #{hora_ultima_actualizacion} o utilizarlo para hacer intervalos.
+            
+                        #Test con los pines
+
+            #pin = Pin(17, Pin.OUT) # Primer argumento nº del pin, segundo tarea de output.
+            #pin.value(1) # 1 = electricidad, 0 = parao
+            
+            print(array_mas_baratos(valor))
+            print(datos)
+            conn.send('HTTP/1.1 200 OK\n')
+            conn.send('Content-Type: text/html\n')
+            conn.send('Connection: close\n\n')
+            conn.close()
+        else:
+            response = web_page()
+            conn.send('HTTP/1.1 200 OK\n')
+            conn.send('Content-Type: text/html\n')
+            conn.send('Connection: close\n\n')
+            conn.sendall(response)
+            conn.close()
 
     if time.ticks_diff(time.ticks_ms(), ultima_actualizacion) >= INTERVALO:
         make_request(URL_API_LUZ)
         ultima_actualizacion = time.ticks_ms()
         hora_ultima_actualizacion = get_hora(URL_API_HORA)
         print(hora_ultima_actualizacion)
-
-
