@@ -1,6 +1,6 @@
 import { Bluetooth } from 'expo';
 
-const sendBluetoothData = async (ssid, password) => {
+export const sendBluetoothData = async (ssid, password) => {
   try {
     // Escanea y encuentra dispositivos Bluetooth cercanos
     const device = await Bluetooth.requestDeviceAsync({

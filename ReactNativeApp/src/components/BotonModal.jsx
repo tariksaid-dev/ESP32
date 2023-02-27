@@ -1,19 +1,27 @@
-import React, { useState } from "react";
-import { TouchableOpacity, Text, View, StyleSheet, Dimensions } from "react-native";
+import React, { useState, useContext } from "react";
+import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
 import Modal from "react-native-modal";
+import { sendBluetoothData } from "../services/bluetooth";
+import { AppContext } from "../context/AppContext.js";
 
-function BotonModal() {
-  const [isModalVisible, setModalVisible] = useState(false);
+const BotonModal = () => {
+    // DataContext
+    const { ssid } = useContext(AppContext);
+    const { password } = useContext(AppContext);
 
-  const toggleModal = () => {
+    // Manejo del modal
+    const [isModalVisible, setModalVisible] = useState(false);
+
+    const toggleModal = () => {
     setModalVisible(!isModalVisible);
-  };
+    };
+
 
   return (
     <View style={styles.contenedor}>
         <TouchableOpacity
             style={styles.btn}
-            onPress={toggleModal} >
+            onPress={toggleModal}>
                 <Text style={styles.btnText}>
                     ENVIAR
                 </Text>
@@ -25,6 +33,10 @@ function BotonModal() {
             <View style={styles.contenedorModalText} >
                 <Text style={styles.txtModal}>
                     Tus credenciales han sido enviadas correctamente. Espera mientras el ESP32 se intenta conectar...
+                </Text>
+                <Text>
+                    SSID: {ssid}
+                    PASS: {password}
                 </Text>
             </View>
 

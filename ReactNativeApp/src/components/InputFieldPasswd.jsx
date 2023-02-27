@@ -1,10 +1,16 @@
-import React, {useState} from 'react'
+import React, { useContext, useState} from 'react'
 import FontAwesome from 'react-native-vector-icons/Ionicons'
-import { Text, TextInput, View, StyleSheet, Dimensions, TouchableOpacity, KeyboardAvoidingView } from 'react-native'
+import { Text, TextInput, View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native'
+import { AppContext } from '../context/AppContext'
 
 
 const InputFieldPasswd = () => {
+    const {password, setPassword } = useContext(AppContext);
     const [showPassword, setShowPassword] = useState(false);
+
+    const handlePasswordChange = (text) => {
+        setPassword(text);
+    };
 
     return (
 
@@ -14,7 +20,9 @@ const InputFieldPasswd = () => {
             <TextInput 
                 placeholder='Introduce la contraseña' 
                 style={styles.input} 
-                secureTextEntry={!showPassword}/>
+                secureTextEntry={!showPassword}
+                onChangeText={handlePasswordChange}
+                value={password}/>
             <TouchableOpacity 
                 onPress={() => setShowPassword(!showPassword)}>
                 <Text style={{paddingHorizontal: 5}}>
