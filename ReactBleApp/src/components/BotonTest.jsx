@@ -1,15 +1,40 @@
-import React, { useState, useContext } from "react";
-import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
+import React, { useState, useContext, useEffect } from "react";
+import { TouchableOpacity, Text, View, StyleSheet, FlatList } from "react-native";
 import { useBle } from "../services/bluetooth.js";
 import DeviceModal from "./ModalBluetooth.jsx";
 
 const BotonTest = () => {
-    const ble = useBle();
-    const handlePress = async () => {
-        const granted = await ble.requestPermissions();
-        console.log("Permission granted?", granted);
-    };
+    const {  requestPermissions, scanForPeripherals, allDevices } = useBle();
 
+
+    useEffect(() => {
+        scanForPeripherals();
+    }, []);
+
+    useEffect(() => {
+        console.log(allDevices);
+    }, [allDevices]);
+    // const handlePress = async () => {
+    //     const granted = await ble.requestPermissions();
+    //     console.log("Permission granted?", granted);
+    // };
+
+    const [devices, setDevices] = useState([]);
+    // const handleScanForPeripherals = async () => {
+    //     const allDevices = await ble.scanForPeripherals();
+    //     setDevices(allDevices);
+    //     console.log(devices);
+    // };
+
+    const scanForDevices = async () => {
+        const isPermissionEnabled = await requestPermissions();
+        console.log(isPermissionEnabled);
+        if (isPermissionEnabled) {
+            scanForPeripherals();
+        } else {
+            console.log("No hay permisos")
+        }
+    } 
 
 
     // const [isModalVisible, setIsModalVisible] = useState(false);
@@ -31,12 +56,20 @@ const BotonTest = () => {
     return (
         <View style={styles.contenedor}>
             <TouchableOpacity
-                onPress={handlePress}
+                onPress={{}}
                 style={styles.btn}>
+                    <Text style={styles.btnModalText}>
+                        Probar
+                    </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.btn}
+                onPress={scanForDevices}>
                 <Text style={styles.btnModalText}>
-                    Probar
+                    Scan
                 </Text>
             </TouchableOpacity>
+            <Text></Text>
         </View>
     )
 }
@@ -47,7 +80,8 @@ const styles = StyleSheet.create ({
     contenedor: {
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 60
+        // marginTop: 60
+        marginTop: 20
     },
 
     btn: {
