@@ -5,19 +5,19 @@ import InputFieldPasswd from './InputFieldPasswd'
 import { AppProvider } from '../context/AppContext'
 import BotonModal from './BotonModal'
 import { KeyboardAvoidingView } from 'react-native'
-import BotonTest from './BotonTest'
 import DisplayConexion from './DisplayConexion'
+import Footer from './Footer'
 
 const Main = () => {
     return (
         <AppProvider>
             <KeyboardAvoidingView behavior='padding' style={{flex:1}}>
                 <Header/>
-                <DisplayConexion />
+                {/* <DisplayConexion /> */}
                 <InputFieldSSID />
                 <InputFieldPasswd />
                 <BotonModal /> 
-                {/* <BotonTest /> */}
+                <Footer />
             </KeyboardAvoidingView>
         </AppProvider>
     )

@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect} from 'react'
 import FontAwesome from 'react-native-vector-icons/MaterialCommunityIcons'
-import { Text, TextInput, View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native'
+import { Text, TextInput, View, StyleSheet, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { AppContext } from '../context/AppContext'
 import { useBle } from "../services/bluetooth.js";
 
@@ -9,11 +9,13 @@ const DisplayConexion = () => {
         requestPermissions, 
         scanForPeripherals, 
         allDevices,
-        connectToDevice } = useBle();
+        connectToDevice,
+        connectedDevice,
+        disconnect } = useBle();
 
-    const [devices, setDevices] = useState([]);
+    const { devices, setDevices } = useContext(AppContext);
     const [isScanning, setIsScanning] = useState(false);
-    const [connectedDevice, setConnectedDevice] = useState(null); 
+    const [isDeviceFound, setIsDeviceFound] = useState(false);
 
     const scanForDevices = async () => {
         const isPermissionEnabled = await requestPermissions();
@@ -26,36 +28,61 @@ const DisplayConexion = () => {
         }
     } 
 
-    //test
     useEffect(() => {
-        console.log(allDevices);
+        console.log(allDevices, "traza uno");
         setDevices(allDevices);
         if(allDevices.some(device => device.name === "ESP32")) {
             setIsScanning(false);
-            scanForPeripherals(false);
-
-            // test
-            const device = allDevices.find((device) => device.name === "ESP32");
-            connectToDevice(device.id).then((connectedDevice) => {
-                setConnectedDevice(connectedDevice);
-            });
+            setIsDeviceFound(true);
+            connectToDevice(allDevices.find(device => device.name === "ESP32").id);
         }
     }, [allDevices]);
+
+
+    const handleDisconnect = async () => {
+        await disconnect();
+        setIsDeviceFound(false);
+    }
 
     return (
         <View style={styles.container}>
             <Text>
-                <FontAwesome
-                    name={isScanning ? "bluetooth-connect" : "bluetooth-off"}
-                    size={40}/>
+                {isDeviceFound ? (
+                    <FontAwesome 
+                        name="bluetooth-connect" 
+                        size={40} />
+                    ) : (
+                    isScanning ? (
+                        <ActivityIndicator
+                            size='small'
+                            color={"#0000ff"} />
+                    ) : (
+                        <FontAwesome 
+                            name='bluetooth-off'
+                            size={40} />
+                    )
+                )}
             </Text>
-            <TouchableOpacity 
-                style={styles.btn}
-                onPress={scanForDevices }>
-                <Text style={styles.btnText}>
-                    Buscar dispositivo
-                </Text>
-            </TouchableOpacity>
+            <Text>
+                Sin conexión
+            </Text>
+            {/* {isDeviceFound ? (
+                <TouchableOpacity 
+                    style={styles.btn}
+                    onPress={handleDisconnect }>
+                    <Text style={styles.btnText}>
+                        Desconectar
+                    </Text>
+                </TouchableOpacity>
+            ) : (
+                <TouchableOpacity 
+                    style={styles.btn}
+                    onPress={scanForDevices }>
+                    <Text style={styles.btnText}>
+                        Buscar dispositivo
+                    </Text>
+                </TouchableOpacity>
+            )} */}
         </View>
     )
 }
