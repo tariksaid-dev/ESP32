@@ -1,7 +1,9 @@
 import ujson as json
 import urequests as requests
-import time
+import utime as time
 import select
+
+gc.collect()
 
 
 def make_request(url):
@@ -24,16 +26,18 @@ def make_request(url):
         print(prices_str)
     else:
         print("Error, no se pudieron cargar los datos")
-        
+
+
 def get_hora(url):
     print("Obteniendo la hora de Madrid, España")
     response = requests.get(url)
-    if(response.status_code == 200):
+    if (response.status_code == 200):
         print("Hora cargada con éxito")
         data = response.json()
         return data['datetime']
     else:
         print("Error en la API, no se pudo obtener la hora")
+
 
 def array_mas_baratos(valor):
     elementos = prices_str
@@ -42,8 +46,9 @@ def array_mas_baratos(valor):
     elementos_baratos_str = [str(p) for p in elementos_baratos]
     return elementos_baratos_str
 
+
 def web_page():
-  html = """<!DOCTYPE html>
+    html = """<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -191,7 +196,7 @@ def web_page():
       }
     </style>
   </head>"""
-  html += f"""
+    html += f"""
   <body>
     <h1 class="titulo">ESP32 WebServer by tarik-dev</h1>
     <div class="cabecera">
@@ -365,7 +370,7 @@ def web_page():
       <button class="button button2" id="modo_semiautomatico">Semi-automático</button>
       <button class="button button3" id="modo_manual">Manual</button>
     </div> """
-  html += """
+    html += """
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         // Elementos del DOM
@@ -498,8 +503,7 @@ def web_page():
 </html>
 """
 
-  return html
-
+    return html
 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -519,9 +523,8 @@ datos = {}
 prices_str = ['0'] * 24
 
 
-
 while True:
-    
+
     ready_to_read, _, _ = select.select([s], [], [], 1)
     if s in ready_to_read:
         conn, addr = s.accept()
@@ -530,18 +533,18 @@ while True:
         if 'GET /modo_automatico' in request:
             valor = request.split('=')[1].split(' ')[0]
             # Aquí implementamos las funcionalidades dle modo automático. Array disponible con el
-            #método de la siguiente línea para obtener los datos más baratos. Valor sale del display que
-            # tenemos al lado del modo automático. 
+            # método de la siguiente línea para obtener los datos más baratos. Valor sale del display que
+            # tenemos al lado del modo automático.
             # machine.tirarluz al GPIO X las horas Y
             # Para saber las horas, tendremos que buscarlas en el array de turno.
             # Es posible que, para llevar un track de la hora, tengamos que o actualizar la hora del sistema con
-            #{hora_ultima_actualizacion} o utilizarlo para hacer intervalos.
-            
-                        #Test con los pines
+            # {hora_ultima_actualizacion} o utilizarlo para hacer intervalos.
 
-            #pin = Pin(17, Pin.OUT) # Primer argumento nº del pin, segundo tarea de output.
-            #pin.value(1) # 1 = electricidad, 0 = parao
-            
+            # Test con los pines
+
+            # pin = Pin(17, Pin.OUT) # Primer argumento nº del pin, segundo tarea de output.
+            # pin.value(1) # 1 = electricidad, 0 = parao
+
             print(array_mas_baratos(valor))
             print(datos)
             conn.send('HTTP/1.1 200 OK\n')
