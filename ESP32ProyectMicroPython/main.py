@@ -524,7 +524,6 @@ prices_str = ['0'] * 24
 
 
 while True:
-
     ready_to_read, _, _ = select.select([s], [], [], 1)
     if s in ready_to_read:
         conn, addr = s.accept()
