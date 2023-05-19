@@ -7,13 +7,19 @@ class GPIOController:
         self.gpio2 = Pin(25, Pin.OUT)
         self.gpio3 = Pin(27, Pin.OUT)
         self.gpio4 = Pin(14, Pin.OUT)
+        self.esta_encendido = False
+        self.es_hora = False
 
     # Encendiendo
     def encender_todos(self):
-        self.gpio1.value(1)
-        self.gpio2.value(1)
-        self.gpio3.value(1)
-        self.gpio4.value(1)
+        if not self.esta_encendido:
+            self.gpio1.value(1)
+            self.gpio2.value(1)
+            self.gpio3.value(1)
+            self.gpio4.value(1)
+            self.esta_encendido = True
+        else:
+            print("No se puede encender, ya que ya está encendido")
 
     def encender_gpio_32(self):
         self.gpio1.value(1)
@@ -29,11 +35,15 @@ class GPIOController:
 
     # Apagando
     def apagar_todos(self):
-        self.gpio1.value(0)
-        self.gpio2.value(0)
-        self.gpio3.value(0)
-        self.gpio4.value(0)
-
+        if self.esta_encendido:
+            self.gpio1.value(0)
+            self.gpio2.value(0)
+            self.gpio3.value(0)
+            self.gpio4.value(0)
+            self.esta_encendido = False
+        else:
+            print("No se puede apagar ya que ya esta apagado")
+            
     def apagar_gpio_32(self):
         self.gpio1.value(0)
 

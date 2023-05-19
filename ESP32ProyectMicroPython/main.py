@@ -4,6 +4,7 @@ import utime as time
 import select
 from .test.controller import gpio_controller
 from .test.controller import time_controller
+from .test.service import gpio_service
 
 gc.collect()
 
@@ -531,6 +532,7 @@ while True:
         conn, addr = s.accept()
         print(f'Se ha conectado al socket {addr}')
         request = conn.recv(1024).decode()
+
         if 'GET /modo_automatico' in request:
             valor = request.split('=')[1].split(' ')[0]
             # Aquí implementamos las funcionalidades dle modo automático. Array disponible con el
@@ -547,9 +549,11 @@ while True:
             # pin.value(1) # 1 = electricidad, 0 = parao
             gpio = gpio_controller.GPIOController()
             time = time_controller.TimeController()
-            
-            gpio.encender_todos()
-            
+            gpioSer = gpio_service.GPIOService()
+
+
+
+
             print(array_mas_baratos(valor))
             conn.send('HTTP/1.1 200 OK\n')
             conn.send('Content-Type: text/html\n')
@@ -566,5 +570,6 @@ while True:
     if time.ticks_diff(time.ticks_ms(), ultima_actualizacion) >= INTERVALO:
         make_request(URL_API_LUZ)
         ultima_actualizacion = time.ticks_ms()
-        hora_ultima_actualizacion = get_hora(URL_API_HORA)
+        time.cargar_hora()
+        hora_ultima_actualizacion = time.
         print(hora_ultima_actualizacion)
