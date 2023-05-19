@@ -2,6 +2,8 @@ import ujson as json
 import urequests as requests
 import utime as time
 import select
+from .test.controller import gpio_controller
+from .test.controller import time_controller
 
 gc.collect()
 
@@ -543,9 +545,12 @@ while True:
 
             # pin = Pin(17, Pin.OUT) # Primer argumento nº del pin, segundo tarea de output.
             # pin.value(1) # 1 = electricidad, 0 = parao
-
+            gpio = gpio_controller.GPIOController()
+            time = time_controller.TimeController()
+            
+            gpio.encender_todos()
+            
             print(array_mas_baratos(valor))
-            print(datos)
             conn.send('HTTP/1.1 200 OK\n')
             conn.send('Content-Type: text/html\n')
             conn.send('Connection: close\n\n')

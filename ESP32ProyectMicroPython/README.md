@@ -28,7 +28,7 @@ La web es accesible mediante la IP a la cuál la placa está conectada. Es decir
 
 La placa dispone de tres modos de uso:
 
-- Automático: 
+- Automático: Selecciona las 
 
 - Semi-automático: 
 
