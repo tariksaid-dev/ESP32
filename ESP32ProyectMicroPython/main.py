@@ -3,7 +3,7 @@ import urequests as requests
 import utime as time
 import select
 
-gc.collect()
+gc.enable()
 
 
 
