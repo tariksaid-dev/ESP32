@@ -1,5 +1,5 @@
 import controller.gpio_controller as gpio
-import controller.time_controller as time
+import time_controller as time
 
 class GPIOService:
   

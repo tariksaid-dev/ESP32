@@ -1,6 +1,6 @@
 from time import sleep
-import controller.time_controller as timecntrl
-import controller.gpio_controller as gpiocntrl
+import time_controller as timecntrl
+# import controller.gpio_controller as gpiocntrl
 
 # Datos cargados con éxito
 # {'01-02': 87.96, '06-07': 101.63, '08-09': 129.74, '19-20': 140.55, '16-17': 65.34, '18-19': 127.02, '05-06': 101.46, '11-12': 133.14, '21-22': 200.29, '23-24': 133.84, '00-01': 98.33, '15-16': 71.11, '10-11': 140.01, '07-08': 120.68, '04-05': 100.84, '03-04': 88.33, '14-15': 70.63, '22-23': 149.56, '20-21': 173.02, '17-18': 71.58, '02-03': 86.84, '13-14': 118.58, '09-10': 103.82, '12-13': 127.3}
@@ -74,10 +74,11 @@ print(time)
 
 print("---------\n\n")
 
-time = timecntrl.TimeController()
-gpio = gpiocntrl.GPIOController()
+# time = timecntrl.TimeController()
+# gpio = gpiocntrl.GPIOController()
 
-if time.hora_intervalo in hora_formatted(): # debe estar encendido?
-    gpio.es_hora = True
-    if 
+# if time.hora_intervalo in hora_formatted(): # debe estar encendido?
+#     gpio.es_hora = True
+#     if 
+
 
