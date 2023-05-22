@@ -2,12 +2,19 @@ import ujson as json
 import urequests as requests
 import utime as time
 import select
+import time_controller as time_cntrl
+import gpio_controller as gpio_cntrl
 
 gc.collect()
 
+date_controller = time_cntrl.TimeController()
+date_controller.cargar_hora()
+
+gpio_controller = gpio_cntrl.GPIOController()
 
 def make_request(url):
     global prices_str
+    global datos_ordenados
     print("Cargando los datos...")
     response = requests.get(url)
     if response.status_code == 200:
@@ -26,18 +33,16 @@ def make_request(url):
         print(prices_str)
     else:
         print("Error, no se pudieron cargar los datos")
-
-
+        
 def get_hora(url):
     print("Obteniendo la hora de Madrid, España")
     response = requests.get(url)
-    if (response.status_code == 200):
+    if(response.status_code == 200):
         print("Hora cargada con éxito")
         data = response.json()
         return data['datetime']
     else:
         print("Error en la API, no se pudo obtener la hora")
-
 
 def array_mas_baratos(valor):
     elementos = prices_str
@@ -46,9 +51,18 @@ def array_mas_baratos(valor):
     elementos_baratos_str = [str(p) for p in elementos_baratos]
     return elementos_baratos_str
 
+# Devuelve las horas más baratas recibiendo el array de tuplas y el valor (número de horas que deseamos)
+def obtener_horas_mas_baratas(array, valor):
+    # Ordenar por el segundo valor de la tupla
+    datos_ordenados = sorted(array, key=lambda x: x[1])
+    # Obtener los 3 más baratos (puedes ajustar este número según tus necesidades)
+    mas_baratos = datos_ordenados[:valor]
+    # Extraer solo las horas como strings
+    horas_mas_baratas = [hora for hora, _ in mas_baratos]
+    return horas_mas_baratas
 
 def web_page():
-    html = """<!DOCTYPE html>
+  html = """<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -196,7 +210,7 @@ def web_page():
       }
     </style>
   </head>"""
-    html += f"""
+  html += f"""
   <body>
     <h1 class="titulo">ESP32 WebServer by tarik-dev</h1>
     <div class="cabecera">
@@ -367,11 +381,10 @@ def web_page():
           <button class="button-decrement"><b>-</b></button>
         </div>
       </div>
-      <button class="button button2" id="modo_semiautomatico">Semi-automático</button>
+      <!-- <button class="button button2" id="modo_semiautomatico">Semi-automático</button> -->
       <button class="button button3" id="modo_manual">Manual</button>
     </div> """
-    html += """
-    <script>
+  html += """<script>
       document.addEventListener('DOMContentLoaded', function() {
         // Elementos del DOM
         const display = document.querySelector('.display');
@@ -379,17 +392,20 @@ def web_page():
         const decrementButton = document.querySelector('.button-decrement');
         const modoAutomaticoButton = document.getElementById("modo_automatico");
         const modoManualButton = document.getElementById("modo_manual");
-        const modoSemiAutomaticoButton = document.getElementById("modo_semiautomatico");
+        // const modoSemiAutomaticoButton = document.getElementById("modo_semiautomatico");
+
+        let auto_on = false
+        let semi_on = false
+        let manual_on = false
 
         // Función para reiniciar los colores de cada square. Deberá ser implementada en cada botón para no crear confusión al cambiar de modos.
         function resetSelection() {
-            precios_manual = []
+            // precios_manual = []
             const squares = document.querySelectorAll('.square');
             squares.forEach((square) => {
                 square.classList.remove('color-selected');
             })
         }
-
 
         // Función seleccionar precios más baratos automático
         // También añade un borde al botón auto
@@ -411,7 +427,7 @@ def web_page():
                 el.parentNode.classList.remove('color-selected');
             }});
         modoAutomaticoButton.classList.add('border');
-        modoSemiAutomaticoButton.classList.remove('border');
+        // modoSemiAutomaticoButton.classList.remove('border');
         modoManualButton.classList.remove('border');
         }
 
@@ -428,23 +444,34 @@ def web_page():
         // La dejaremos en un contexto global para mejorar la accesibilidad al usuario. Será la "por defecto". Cada vez que clickes en un número, pasaremos al modo manual.
         let precios_manual = [];
         function precios_manuales() {
-            let squares = document.querySelectorAll('.square');
-            squares.forEach((square) => {
-                square.addEventListener('click', () => {
+
+            let lists = document.querySelectorAll('li');
+            lists.forEach((list) => {
+                list.addEventListener('click', () => {
+                    if (auto_on) {
+                    precios_manual = []
+                    resetSelection()
+                    console.log("aaaaaaaas")
+                    manual_on = true    
+                    auto_on = false
+                }
                     modoManualButton.classList.add('border');
                     modoAutomaticoButton.classList.remove('border');
-                    modoSemiAutomaticoButton.classList.remove('border');
+                    // modoSemiAutomaticoButton.classList.remove('border');
                     
-                    const precio = square.querySelector('.precio').innerText;
-                    const index = precios_manual.indexOf(parseFloat(precio));
+                    const precio = list.querySelector('.intervaloHoras').innerText;
+                    const index = precios_manual.indexOf(precio);
+
                     if(index > -1) {
                         precios_manual.splice(index, 1);
-                        square.classList.remove('color-selected');
+                        list.querySelector('li .square').classList.remove('color-selected');
                     } else {
-                        precios_manual.push(parseFloat(precio));
-                        square.classList.add('color-selected');
+                        precios_manual.push(precio);
+                        list.querySelector('li .square').classList.add('color-selected');
                     }
                     console.log(precios_manual);
+                    console.log(auto_on)
+                    console.log(manual_on)
                 });
             });
             console.log(precios_manual);
@@ -472,17 +499,23 @@ def web_page():
         // Fetch functions
         function modo_automatico() {
           // ahora mismo solo mando el número de horas que selecciona el usuario. Podría mandar el array ya hecho 
+          auto_on = true
+          semi_on = false
+          manual_on = false
           fetch(`/modo_automatico?value=${cantidad}`, {method: 'GET'});
           precios_baratos_automatico(cantidad);
         }
 
         function modo_manual() {
             // Podemos hacer /modo_manual?value=${precios.join(',')}
-          fetch(`/modo_manual?value=0`, {method: 'GET'});
+          auto_on = false
+          semi_on = false
+          manual_on = true
+          fetch(`/modo_manual?value=${precios_manual}`, {method: 'GET'});
         }
 
         function modo_semiautomatico() {
-          fetch(`/modo_semiautomico?value=0`, {method: 'GET'});
+          fetch(`/modo_semiautomatico?value=0`, {method: 'GET'});
           precios_semiautomaticos();
         }
     
@@ -491,19 +524,15 @@ def web_page():
         decrementButton.addEventListener('click', decrementar);
         modoAutomaticoButton.addEventListener('click', modo_automatico);
         modoManualButton.addEventListener('click', modo_manual);
-        modoSemiAutomaticoButton.addEventListener('click', modo_semiautomatico);
+        // modoSemiAutomaticoButton.addEventListener('click', modo_semiautomatico);
       });
-
-    // Si quiero un autorefresh de la página: 
-    //   setTimeout(function(){
-    //     location.reload();
-    //     }, 6000);
     </script>
   </body>
 </html>
 """
 
-    return html
+  return html
+
 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -514,44 +543,77 @@ print("Socket creado correctamente")
 # Api de semi/pago, cambiar en producto final o pagar 9$ mes para uso ilimitado
 URL_API_HORA = "https://timezone.abstractapi.com/v1/current_time/?api_key=1efba11478714b6599e5d95b2b0762f1&location=Madrid,%Spain"
 URL_API_LUZ = "https://api.preciodelaluz.org/v1/prices/all?zone=PCB"
-INTERVALO = 15000
+INTERVALO = 45000
 
 ultima_actualizacion = time.ticks_ms()
 hora_ultima_actualizacion = ""
 precio_medio = 0
 datos = {}
 prices_str = ['0'] * 24
+datos_ordenados = []
 
+def response_funct(conn):
+  conn.send('HTTP/1.1 200 OK\n')
+  conn.send('Content-Type: text/html\n')
+  conn.send('Connection: close\n\n')
+  conn.close()
+
+make_request(URL_API_LUZ)
+ultima_actualizacion = time.ticks_ms()
+date_controller.cargar_hora()
+print(hora_ultima_actualizacion)
 
 while True:
-
+    
+    gc.collect()
     ready_to_read, _, _ = select.select([s], [], [], 1)
     if s in ready_to_read:
         conn, addr = s.accept()
         print(f'Se ha conectado al socket {addr}')
         request = conn.recv(1024).decode()
-        if 'GET /modo_automatico' in request:
-            valor = request.split('=')[1].split(' ')[0]
-            # Aquí implementamos las funcionalidades dle modo automático. Array disponible con el
-            # método de la siguiente línea para obtener los datos más baratos. Valor sale del display que
-            # tenemos al lado del modo automático.
-            # machine.tirarluz al GPIO X las horas Y
-            # Para saber las horas, tendremos que buscarlas en el array de turno.
-            # Es posible que, para llevar un track de la hora, tengamos que o actualizar la hora del sistema con
-            # {hora_ultima_actualizacion} o utilizarlo para hacer intervalos.
-
-            # Test con los pines
-
-            # pin = Pin(17, Pin.OUT) # Primer argumento nº del pin, segundo tarea de output.
-            # pin.value(1) # 1 = electricidad, 0 = parao
-
-            print(array_mas_baratos(valor))
-            print(datos)
-            conn.send('HTTP/1.1 200 OK\n')
-            conn.send('Content-Type: text/html\n')
-            conn.send('Connection: close\n\n')
-            conn.close()
+        print(request)
+        if request and '/modo_' in request:
+            
+            if '/modo_automatico' in request:
+                print("automatico")
+                valor = request.split('=')[1].split(' ')[0]
+                print(obtener_horas_mas_baratas(datos_ordenados, int(valor)))
+                print(valor)
+                #print(array_mas_baratos(valor))
+                print(time.gmtime())
+                print(time.gmtime()[3])
+                print(date_controller.hora_intervalo)
+                if date_controller.hora_intervalo in obtener_horas_mas_baratas(datos_ordenados, int(valor)):
+                    print("exito, la hora coincide y se pueden enender los gpios")
+                    print("los gpios estan apagados")
+                    gpio_controller.test_on()
+                else:
+                    print("la hora no coincide")
+                    print(date_controller.hora_intervalo)
+                    print(obtener_horas_mas_baratas(datos_ordenados, int(valor)))
+                    gpio_controller.test_off()
+                
+                
+                
+            elif '/modo_semiautomatico' in request:
+                print("semi")
+            elif '/modo_manual' in request:
+                print("manual")
+                valor = request.split('=')[1].split(' ')[0]
+                array_valor = valor.split(',')
+                if date_controller.hora_intervalo in array_valor:
+                    print("exito, la hora coincide y se pueden encender los gpios")
+                    gpio_controller.test_on()
+                else:
+                    print("la hora no coincide")
+                    print(date_controller.hora_intervalo)
+                    gpio_controller.test_off()
+                
+            response_funct(conn)
+                
         else:
+            print("pagina refrescada")
+            gc.collect()
             response = web_page()
             conn.send('HTTP/1.1 200 OK\n')
             conn.send('Content-Type: text/html\n')
@@ -559,8 +621,10 @@ while True:
             conn.sendall(response)
             conn.close()
 
+
     if time.ticks_diff(time.ticks_ms(), ultima_actualizacion) >= INTERVALO:
+        gc.collect()
         make_request(URL_API_LUZ)
         ultima_actualizacion = time.ticks_ms()
-        hora_ultima_actualizacion = get_hora(URL_API_HORA)
+        date_controller.cargar_hora()
         print(hora_ultima_actualizacion)

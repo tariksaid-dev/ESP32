@@ -4,7 +4,7 @@ import struct
 from machine import Pin
 
 pbt = Pin(2, Pin.OUT)
-pbt.off()
+pbt.off() 
 
 _IRQ_CENTRAL_CONNECT = const(1)
 _IRQ_CENTRAL_DISCONNECT = const(2)
@@ -55,7 +55,7 @@ class BLEUART:
         if event == _IRQ_CENTRAL_CONNECT:
             conn_handle, _, _ = data
             print("_IRQ_CENTRAL_CONNECT")
-            pbt.on()
+            pbt.on() 
             self._connections.add(conn_handle)
         elif event == _IRQ_CENTRAL_DISCONNECT:
             conn_handle, _, _ = data
@@ -146,8 +146,9 @@ def advertising_payload(limited_disc=False, br_edr=False, name=None, services=No
 
 
 def demo():
-    print("demo")
+    print("demo")   
 
 
 if __name__ == "__main__":
     demo()
+
