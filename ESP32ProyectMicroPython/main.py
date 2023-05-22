@@ -2,6 +2,8 @@ import ujson as json
 import urequests as requests
 import utime as time
 import select
+import time_controller
+from machine import RTC
 
 gc.enable()
 
@@ -480,7 +482,7 @@ def web_page():
         }
 
         function modo_semiautomatico() {
-          fetch(`/modo_semiautomico?value=0`, {method: 'GET'});
+          fetch(`/modo_semiautomatico?value=0`, {method: 'GET'});
           precios_semiautomaticos();
         }
     
@@ -523,6 +525,15 @@ prices_str = ['0'] * 24
 
 
 
+#funcion para response
+def response_funct(conn):
+  conn.send('HTTP/1.1 200 OK\n')
+  conn.send('Content-Type: text/html\n')
+  conn.send('Connection: close\n\n')
+  conn.close()
+
+
+
 while True:
     
     ready_to_read, _, _ = select.select([s], [], [], 1)
@@ -530,27 +541,57 @@ while True:
         conn, addr = s.accept()
         print(f'Se ha conectado al socket {addr}')
         request = conn.recv(1024).decode()
-        if 'GET /modo_automatico' in request:
-            valor = request.split('=')[1].split(' ')[0]
-            # Aquí implementamos las funcionalidades dle modo automático. Array disponible con el
-            #método de la siguiente línea para obtener los datos más baratos. Valor sale del display que
-            # tenemos al lado del modo automático. 
-            # machine.tirarluz al GPIO X las horas Y
-            # Para saber las horas, tendremos que buscarlas en el array de turno.
-            # Es posible que, para llevar un track de la hora, tengamos que o actualizar la hora del sistema con
-            #{hora_ultima_actualizacion} o utilizarlo para hacer intervalos.
+        print(request) # la solicitud solo se genera al solicitud http (entrar a la web o darle a uno de los botones)
+
+        # para distinguir entre refresco de web o click de boton
+        if request and 'GET /api/modo_automatico' in request: 
+          #TODO: hilo secundario a partir de aquí, importante
+          #1. Es un automatico, semi o manual=
+          if 'modo_automatico' in request:
+            # si el valor no es cero
+            if valor != 0:
+              if hora_actual == hora_en_array:
+                 gpio.encender() 
+
+        # hacer lo mismo con modo semi y manual
+
+               
+
+            # hilo donde inicia el modo automatico.
+            # En este hilo el modo automatico se encarga de chequear el array de horas y la hora actual, y se detiene si recibe otra solicitud (request). Hacer esto con los 3 modos, y tener cuidado con que solo haya un hilo concurrente.
             
+            response_funct()
+
+            # valor = request.split('=')[1].split(' ')[0]
+            # tc = time_controller.TimeController()
+            # rtc = RTC()
+            # encendido = True
+            # while encendido:
+            #   if rtc.datetime()[4] in array_mas_baratos(valor):
+            # print(array_mas_baratos(valor))
+            # print(datos)
+
+          elif 'GET /modo_semiautomatico' in request:
+            print("semi")
+            response_funct()
+
+          elif 'GET /modo_manual' in request:
+            print("manual")
+            response_funct()
+          else:
+            response = web_page()
+            conn.send('HTTP/1.1 200 OK\n')
+            conn.send('Content-Type: text/html\n')
+            conn.send('Connection: close\n\n')
+            conn.sendall(response)
+            conn.close()
+
+
+
                         #Test con los pines
 
             #pin = Pin(17, Pin.OUT) # Primer argumento nº del pin, segundo tarea de output.
             #pin.value(1) # 1 = electricidad, 0 = parao
-            
-            print(array_mas_baratos(valor))
-            print(datos)
-            conn.send('HTTP/1.1 200 OK\n')
-            conn.send('Content-Type: text/html\n')
-            conn.send('Connection: close\n\n')
-            conn.close()
         else:
             response = web_page()
             conn.send('HTTP/1.1 200 OK\n')

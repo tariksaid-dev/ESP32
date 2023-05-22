@@ -81,3 +81,8 @@ class TimeController:
         rtc.datetime(tuple(self.hora_RTC_array))
         print(f"Hora acutal del array RTC: {self.hora_RTC_array}")
         print(f"Hora actual de actualizar el reloj interno: {rtc.datetime()}")
+
+    def __bool__(self):
+        if self.hora_RTC_array[5] < 59:
+            return True
+        return False

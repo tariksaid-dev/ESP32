@@ -1,4 +1,5 @@
 from machine import Pin
+import _thread
 
 class GPIOController:
     def __init__(self):
