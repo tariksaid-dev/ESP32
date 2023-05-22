@@ -56,3 +56,11 @@ class GPIOController:
 
     def apagar_gpio_14(self):
         self.gpio4.value(0)
+
+    def test_on(self):
+        pin = Pin(17, Pin.OUT) # Primer argumento nº del pin, segundo tarea de output.
+        pin.value(1) # 1 = electricidad, 0 = parao
+
+    def test_off(self):
+        pin = Pin(17, Pin.OUT) # Primer argumento nº del pin, segundo tarea de output.
+        pin.value(0) # 1 = electricidad, 0 = parao

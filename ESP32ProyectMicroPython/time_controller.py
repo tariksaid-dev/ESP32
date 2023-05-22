@@ -64,6 +64,7 @@ class TimeController:
         hour = self.hora_string[0:2]
         minute = self.hora_string[3:5]
         
+        self.hora_RTC_array = []
         self.hora_RTC_array.append(int(year))
         self.hora_RTC_array.append(int(month))
         self.hora_RTC_array.append(int(day))
