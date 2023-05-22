@@ -381,7 +381,7 @@ def web_page():
           <button class="button-decrement"><b>-</b></button>
         </div>
       </div>
-      <button class="button button2" id="modo_semiautomatico">Semi-automático</button>
+      <!-- <button class="button button2" id="modo_semiautomatico">Semi-automático</button> -->
       <button class="button button3" id="modo_manual">Manual</button>
     </div> """
   html += """<script>
@@ -543,7 +543,7 @@ print("Socket creado correctamente")
 # Api de semi/pago, cambiar en producto final o pagar 9$ mes para uso ilimitado
 URL_API_HORA = "https://timezone.abstractapi.com/v1/current_time/?api_key=1efba11478714b6599e5d95b2b0762f1&location=Madrid,%Spain"
 URL_API_LUZ = "https://api.preciodelaluz.org/v1/prices/all?zone=PCB"
-INTERVALO = 15000
+INTERVALO = 45000
 
 ultima_actualizacion = time.ticks_ms()
 hora_ultima_actualizacion = ""
@@ -558,8 +558,10 @@ def response_funct(conn):
   conn.send('Connection: close\n\n')
   conn.close()
 
-
-
+make_request(URL_API_LUZ)
+ultima_actualizacion = time.ticks_ms()
+date_controller.cargar_hora()
+print(hora_ultima_actualizacion)
 
 while True:
     
@@ -624,5 +626,5 @@ while True:
         gc.collect()
         make_request(URL_API_LUZ)
         ultima_actualizacion = time.ticks_ms()
-        hora_ultima_actualizacion = get_hora(URL_API_HORA)
+        date_controller.cargar_hora()
         print(hora_ultima_actualizacion)

@@ -10,7 +10,6 @@ gc.enable()
 import ubluetooth as bluetooth
 import utime
 from BLE import BLEUART
-import time_controller as time_cntrl
 
 archivo = "credentials.txt"
 MAX_CONEXION_WIFI = 15
@@ -91,7 +90,4 @@ while not station.isconnected():
     ## por si fuera imprescindible un arranque sin conexión.
 
 print(f'Conectado correctamente a la red {ssid}')
-time = time_cntrl.TimeController()
-time.cargar_hora()
 print(station.ifconfig())
-

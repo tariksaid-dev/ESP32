@@ -84,6 +84,4 @@ class TimeController:
         print(f"Hora actual de actualizar el reloj interno: {rtc.datetime()}")
 
     def __bool__(self):
-        if self.hora_RTC_array[5] < 59:
-            return True
-        return False
+        return self.hora_RTC_array[5] < 59
