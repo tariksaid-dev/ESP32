@@ -57,9 +57,9 @@ class GPIOController:
         self.gpio4.value(0)
 
     def test_on(self):
-        pin = Pin(17, Pin.OUT) # Primer argumento nº del pin, segundo tarea de output.
-        pin.value(1) # 1 = electricidad, 0 = parao
+        pin = Pin(17, Pin.OUT)
+        pin.value(1)
 
     def test_off(self):
-        pin = Pin(17, Pin.OUT) # Primer argumento nº del pin, segundo tarea de output.
-        pin.value(0) # 1 = electricidad, 0 = parao
+        pin = Pin(17, Pin.OUT)
+        pin.value(0)
