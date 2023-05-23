@@ -6,9 +6,6 @@ import time_controller as time_cntrl
 import gpio_controller as gpio_cntrl
 
 gc.collect()
-date_controller = time_cntrl.TimeController()
-date_controller.cargar_hora()
-gpio_controller = gpio_cntrl.GPIOController()
 
 
 def make_request(url):
@@ -29,17 +26,6 @@ def make_request(url):
         print("Error, no se pudieron cargar los datos")
 
 
-def get_hora(url):
-    print("Obteniendo la hora de Madrid, España")
-    response = requests.get(url)
-    if (response.status_code == 200):
-        print("Hora cargada con éxito")
-        data = response.json()
-        return data['datetime']
-    else:
-        print("Error en la API, no se pudo obtener la hora")
-
-
 def array_mas_baratos(valor):
     elementos = prices_str
     elementos_ordenados = sorted([float(p) for p in elementos])
@@ -53,6 +39,13 @@ def obtener_horas_mas_baratas(array, valor):
     mas_baratos = datos_ordenados[:valor]
     horas_mas_baratas = [hora for hora, _ in mas_baratos]
     return horas_mas_baratas
+
+
+def response_funct(conn):
+    conn.send('HTTP/1.1 200 OK\n')
+    conn.send('Content-Type: text/html\n')
+    conn.send('Connection: close\n\n')
+    conn.close()
 
 
 def web_page():
@@ -528,33 +521,25 @@ def web_page():
     return html
 
 
+URL_API_LUZ = "https://api.preciodelaluz.org/v1/prices/all?zone=PCB"
+INTERVALO = 45000
+ultima_actualizacion = time.ticks_ms()
+hora_ultima_actualizacion = ""
+precio_medio = 0
+prices_str = ['0'] * 24
+datos_ordenados = []
+
+date_controller = time_cntrl.TimeController()
+date_controller.cargar_hora()
+gpio_controller = gpio_cntrl.GPIOController()
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('', 80))
 s.listen(5)
 print("Socket creado correctamente")
-
-URL_API_LUZ = "https://api.preciodelaluz.org/v1/prices/all?zone=PCB"
-INTERVALO = 45000
-
-ultima_actualizacion = time.ticks_ms()
-hora_ultima_actualizacion = ""
-precio_medio = 0
-datos = {}
-prices_str = ['0'] * 24
-datos_ordenados = []
-
-
-def response_funct(conn):
-    conn.send('HTTP/1.1 200 OK\n')
-    conn.send('Content-Type: text/html\n')
-    conn.send('Connection: close\n\n')
-    conn.close()
-
-
 make_request(URL_API_LUZ)
 ultima_actualizacion = time.ticks_ms()
 date_controller.cargar_hora()
-print(hora_ultima_actualizacion)
 
 while True:
     gc.collect()
@@ -607,4 +592,5 @@ while True:
         make_request(URL_API_LUZ)
         ultima_actualizacion = time.ticks_ms()
         date_controller.cargar_hora()
-        print(hora_ultima_actualizacion)
+        hora_ultima_actualizacion = date_controller.fecha_completa
+        print(f"Hora última actualización: {hora_ultima_actualizacion}")
