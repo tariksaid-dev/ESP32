@@ -41,13 +41,9 @@ def on_rx():
     data.append(rx_buffer)
     print(rx_buffer)
 
-
-# Init modo estación
 station = network.WLAN(network.STA_IF)
 station.active(True)
 
-##todo: bucle infinito en la segunda vuelta si detecta dos
-## líneas en el archivo credentials. 
 while not station.isconnected():
     data = []
     ssid, password = leer_credenciales()
@@ -86,8 +82,6 @@ while not station.isconnected():
                 escribir_credenciales(data[0], data[1])
         print("Credenciales recibidas por Bluetooth")
         uart.close()
-    ## podría hacer un elif con un código para hacer bypass al bucle
-    ## por si fuera imprescindible un arranque sin conexión.
 
 print(f'Conectado correctamente a la red {ssid}')
 print(station.ifconfig())
