@@ -1,0 +1,12 @@
+{
+  "python.linting.pycodestyleEnabled": true,
+  "python.linting.pydocstyleEnabled": false,
+  "python.linting.enabled": true,
+  "python.linting.pycodestyleArgs": ["--max-line-lenght=200"],
+  "python.formatting.provider": "autopep8",
+  "editor.formatOnSave": true,
+  "python.formatting.autopep8Args": [
+    "--aggressive",
+    "--aggressive"
+  ]
+}
