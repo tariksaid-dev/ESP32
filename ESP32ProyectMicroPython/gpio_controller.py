@@ -1,5 +1,6 @@
 from machine import Pin
 
+
 class GPIOController:
     def __init__(self):
         # Inicializar los pines GPIO según tus necesidades {32, 25, 27, 14}.
@@ -43,7 +44,7 @@ class GPIOController:
             self.esta_encendido = False
         else:
             print("No se puede apagar ya que ya esta apagado")
-            
+
     def apagar_gpio_32(self):
         self.gpio1.value(0)
 

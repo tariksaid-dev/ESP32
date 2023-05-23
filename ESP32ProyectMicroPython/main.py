@@ -7,53 +7,49 @@ import gpio_controller as gpio_cntrl
 
 gc.collect()
 
-date_controller = time_cntrl.TimeController()
-date_controller.cargar_hora()
-
-gpio_controller = gpio_cntrl.GPIOController()
 
 def make_request(url):
-  global prices_str
-  global datos_ordenados
-  print("Cargando los datos...")
-  response = requests.get(url)
-  if response.status_code == 200:
-    print("Datos cargados con éxito")
-    data = response.json()
-    datos = {}
-    for hora in data.values():
-      datos[hora["hour"]] = hora["price"]
-    datos_ordenados = sorted(datos.items())
-    prices = [precio for hora, precio in datos_ordenados]
-    prices_str = list(map(str, prices))
-  else:
-    print("Error, no se pudieron cargar los datos")
-        
-def get_hora(url):
-  print("Obteniendo la hora de Madrid, España")
-  response = requests.get(url)
-  if(response.status_code == 200):
-    print("Hora cargada con éxito")
-    data = response.json()
-    return data['datetime']
-  else:
-    print("Error en la API, no se pudo obtener la hora")
+    global prices_str
+    global datos_ordenados
+    print("Cargando los datos...")
+    response = requests.get(url)
+    if response.status_code == 200:
+        print("Datos cargados con éxito")
+        data = response.json()
+        datos = {}
+        for hora in data.values():
+            datos[hora["hour"]] = hora["price"]
+        datos_ordenados = sorted(datos.items())
+        prices = [precio for hora, precio in datos_ordenados]
+        prices_str = list(map(str, prices))
+    else:
+        print("Error, no se pudieron cargar los datos")
+
 
 def array_mas_baratos(valor):
-  elementos = prices_str
-  elementos_ordenados = sorted([float(p) for p in elementos])
-  elementos_baratos = elementos_ordenados[:int(valor)]
-  elementos_baratos_str = [str(p) for p in elementos_baratos]
-  return elementos_baratos_str
+    elementos = prices_str
+    elementos_ordenados = sorted([float(p) for p in elementos])
+    elementos_baratos = elementos_ordenados[:int(valor)]
+    elementos_baratos_str = [str(p) for p in elementos_baratos]
+    return elementos_baratos_str
+
 
 def obtener_horas_mas_baratas(array, valor):
-  datos_ordenados = sorted(array, key=lambda x: x[1])
-  mas_baratos = datos_ordenados[:valor]
-  horas_mas_baratas = [hora for hora, _ in mas_baratos]
-  return horas_mas_baratas
+    datos_ordenados = sorted(array, key=lambda x: x[1])
+    mas_baratos = datos_ordenados[:valor]
+    horas_mas_baratas = [hora for hora, _ in mas_baratos]
+    return horas_mas_baratas
+
+
+def response_funct(conn):
+    conn.send('HTTP/1.1 200 OK\n')
+    conn.send('Content-Type: text/html\n')
+    conn.send('Connection: close\n\n')
+    conn.close()
+
 
 def web_page():
-  html = """<!DOCTYPE html>
+    html = """<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -127,7 +123,7 @@ def web_page():
       .square:hover {
         cursor: pointer;
       }
-      
+
       .horas {
         display: grid;
         list-style-type: none;
@@ -201,14 +197,14 @@ def web_page():
       }
     </style>
   </head>"""
-  html += f"""
+    html += f"""
   <body>
     <h1 class="titulo">ESP32 WebServer by tarik-dev</h1>
     <div class="cabecera">
       <h1>Hora de la útlima actualización: {hora_ultima_actualizacion}</h1>
       <h1>El precio medio de hoy es: {precio_medio}</h1>
     </div>
-      
+
     <div class="dia">
       <div class="titulo">Mañana</div>
       <ul class="horas">
@@ -375,7 +371,7 @@ def web_page():
       <!-- <button class="button button2" id="modo_semiautomatico">Semi-automático</button> -->
       <button class="button button3" id="modo_manual">Manual</button>
     </div> """
-  html += """<script>
+    html += """<script>
       document.addEventListener('DOMContentLoaded', function() {
         // Elementos del DOM
         const display = document.querySelector('.display');
@@ -443,13 +439,13 @@ def web_page():
                     precios_manual = []
                     resetSelection()
                     console.log("aaaaaaaas")
-                    manual_on = true    
+                    manual_on = true
                     auto_on = false
                 }
                     modoManualButton.classList.add('border');
                     modoAutomaticoButton.classList.remove('border');
                     // modoSemiAutomaticoButton.classList.remove('border');
-                    
+
                     const precio = list.querySelector('.intervaloHoras').innerText;
                     const index = precios_manual.indexOf(precio);
 
@@ -489,7 +485,7 @@ def web_page():
 
         // Fetch functions
         function modo_automatico() {
-          // ahora mismo solo mando el número de horas que selecciona el usuario. Podría mandar el array ya hecho 
+          // ahora mismo solo mando el número de horas que selecciona el usuario. Podría mandar el array ya hecho
           auto_on = true
           semi_on = false
           manual_on = false
@@ -509,7 +505,7 @@ def web_page():
           fetch(`/modo_semiautomatico?value=0`, {method: 'GET'});
           precios_semiautomaticos();
         }
-    
+
         // Listeners
         incrementButton.addEventListener('click', incrementar);
         decrementButton.addEventListener('click', decrementar);
@@ -522,82 +518,79 @@ def web_page():
 </html>
 """
 
-  return html
+    return html
 
 
+URL_API_LUZ = "https://api.preciodelaluz.org/v1/prices/all?zone=PCB"
+INTERVALO = 45000
+ultima_actualizacion = time.ticks_ms()
+hora_ultima_actualizacion = ""
+precio_medio = 0
+prices_str = ['0'] * 24
+datos_ordenados = []
+
+date_controller = time_cntrl.TimeController()
+date_controller.cargar_hora()
+gpio_controller = gpio_cntrl.GPIOController()
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('', 80))
 s.listen(5)
 print("Socket creado correctamente")
-
-URL_API_HORA = "https://timezone.abstractapi.com/v1/current_time/?api_key=1efba11478714b6599e5d95b2b0762f1&location=Madrid,%Spain"
-URL_API_LUZ = "https://api.preciodelaluz.org/v1/prices/all?zone=PCB"
-INTERVALO = 45000
-
-ultima_actualizacion = time.ticks_ms()
-hora_ultima_actualizacion = ""
-precio_medio = 0
-datos = {}
-prices_str = ['0'] * 24
-datos_ordenados = []
-
-def response_funct(conn):
-  conn.send('HTTP/1.1 200 OK\n')
-  conn.send('Content-Type: text/html\n')
-  conn.send('Connection: close\n\n')
-  conn.close()
-
 make_request(URL_API_LUZ)
 ultima_actualizacion = time.ticks_ms()
 date_controller.cargar_hora()
-print(hora_ultima_actualizacion)
 
 while True:
-  gc.collect()
-  ready_to_read, _, _ = select.select([s], [], [], 1)
-  if s in ready_to_read:
-      conn, addr = s.accept()
-      print(f'Se ha conectado al socket {addr}')
-      request = conn.recv(1024).decode()
-      if request and '/modo_' in request:
-        if '/modo_automatico' in request:
-          print("automatico")
-          valor = request.split('=')[1].split(' ')[0]
-          if date_controller.hora_intervalo in obtener_horas_mas_baratas(datos_ordenados, int(valor)):
-            print("exito, la hora coincide y se pueden enender los gpios")
-            gpio_controller.test_on()
-          else:
-            print("la hora no coincide")
-            print(date_controller.hora_intervalo)
-            print(obtener_horas_mas_baratas(datos_ordenados, int(valor)))
-            gpio_controller.test_off()
-        elif '/modo_semiautomatico' in request:
-          print("semi")
-        elif '/modo_manual' in request:
-          print("manual")
-          valor = request.split('=')[1].split(' ')[0]
-          array_valor = valor.split(',')
-          if date_controller.hora_intervalo in array_valor:
-            print("exito, la hora coincide y se pueden encender los gpios")
-            gpio_controller.test_on()
-          else:
-            print("la hora no coincide")
-            print(date_controller.hora_intervalo)
-            gpio_controller.test_off()  
-        response_funct(conn)
-      else:
-        print("pagina refrescada")
-        gc.collect()
-        response = web_page()
-        conn.send('HTTP/1.1 200 OK\n')
-        conn.send('Content-Type: text/html\n')
-        conn.send('Connection: close\n\n')
-        conn.sendall(response)
-        conn.close()
-  if time.ticks_diff(time.ticks_ms(), ultima_actualizacion) >= INTERVALO:
     gc.collect()
-    make_request(URL_API_LUZ)
-    ultima_actualizacion = time.ticks_ms()
-    date_controller.cargar_hora()
-    print(hora_ultima_actualizacion)
+    ready_to_read, _, _ = select.select([s], [], [], 1)
+    if s in ready_to_read:
+        conn, addr = s.accept()
+        print(f'Se ha conectado al socket {addr}')
+        request = conn.recv(1024).decode()
+        if request and '/modo_' in request:
+            if '/modo_automatico' in request:
+                print("automatico")
+                valor = request.split('=')[1].split(' ')[0]
+                if date_controller.hora_intervalo in obtener_horas_mas_baratas(
+                        datos_ordenados, int(valor)):
+                    print("exito, la hora coincide y se pueden enender los gpios")
+                    gpio_controller.test_on()
+                else:
+                    print("la hora no coincide")
+                    print(date_controller.hora_intervalo)
+                    print(
+                        obtener_horas_mas_baratas(
+                            datos_ordenados,
+                            int(valor)))
+                    gpio_controller.test_off()
+            elif '/modo_semiautomatico' in request:
+                print("semi")
+            elif '/modo_manual' in request:
+                print("manual")
+                valor = request.split('=')[1].split(' ')[0]
+                array_valor = valor.split(',')
+                if date_controller.hora_intervalo in array_valor:
+                    print("exito, la hora coincide y se pueden encender los gpios")
+                    gpio_controller.test_on()
+                else:
+                    print("la hora no coincide")
+                    print(date_controller.hora_intervalo)
+                    gpio_controller.test_off()
+            response_funct(conn)
+        else:
+            print("pagina refrescada")
+            gc.collect()
+            response = web_page()
+            conn.send('HTTP/1.1 200 OK\n')
+            conn.send('Content-Type: text/html\n')
+            conn.send('Connection: close\n\n')
+            conn.sendall(response)
+            conn.close()
+    if time.ticks_diff(time.ticks_ms(), ultima_actualizacion) >= INTERVALO:
+        gc.collect()
+        make_request(URL_API_LUZ)
+        ultima_actualizacion = time.ticks_ms()
+        date_controller.cargar_hora()
+        hora_ultima_actualizacion = date_controller.fecha_completa
+        print(f"Hora última actualización: {hora_ultima_actualizacion}")

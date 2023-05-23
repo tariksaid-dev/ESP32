@@ -1,21 +1,19 @@
-try:
-    import usocket as socket
-except:
-    import socket
+from BLE import BLEUART
+import utime
+import ubluetooth as bluetooth
+import gc
+import usocket as socket
 import network
 import esp
 esp.osdebug(None)
-import gc
 gc.enable()
-import ubluetooth as bluetooth
-import utime
-from BLE import BLEUART
 
 archivo = "credentials.txt"
 MAX_CONEXION_WIFI = 15
 
+
 def leer_credenciales():
-    try: 
+    try:
         with open(archivo, "r") as f:
             ssid = f.readline().strip()
             password = f.readline().strip()
@@ -26,20 +24,24 @@ def leer_credenciales():
     except FileNotFoundError:
         return None, None
 
+
 def escribir_credenciales(ssid=None, password=None):
     if ssid and password:
         with open(archivo, "w") as f:
             f.write(ssid + "\n")
             f.write(password + "\n")
 
+
 def borrar_credenciales():
     with open(archivo, "w") as f:
         f.write("")
+
 
 def on_rx():
     rx_buffer = uart.read().decode().strip()
     data.append(rx_buffer)
     print(rx_buffer)
+
 
 station = network.WLAN(network.STA_IF)
 station.active(True)
@@ -49,12 +51,13 @@ while not station.isconnected():
     ssid, password = leer_credenciales()
     if ssid and password:
         print("Conectando a la red wifi...")
-        print(ssid) # traza
-        print(password) #traza 
+        print(ssid)  # traza
+        print(password)  # traza
         station.disconnect()
         station.connect(ssid, password)
         tiempo_inicial = utime.time()
-        while not station.isconnected() and utime.time() - tiempo_inicial < MAX_CONEXION_WIFI:
+        while not station.isconnected() and utime.time() - \
+                tiempo_inicial < MAX_CONEXION_WIFI:
             utime.sleep_ms(1000)
         if station.isconnected():
             pass
@@ -70,7 +73,7 @@ while not station.isconnected():
                     escribir_credenciales(data[0], data[1])
                     print("Credenciales recibidas por Bluetooth")
                     uart.close()
-    else: 
+    else:
         borrar_credenciales()
         print("No se encuentra la SSID/Password. Cambiando a modo Ble...")
         ble = bluetooth.BLE()
