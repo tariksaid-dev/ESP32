@@ -4,7 +4,7 @@ import struct
 from machine import Pin
 
 pbt = Pin(2, Pin.OUT)
-pbt.off() 
+pbt.off()
 
 _IRQ_CENTRAL_CONNECT = const(1)
 _IRQ_CENTRAL_DISCONNECT = const(2)
@@ -42,7 +42,8 @@ class BLEUART:
         self._connections = set()
         self._rx_buffer = bytearray()
         self._handler = None
-        # Optionally add services=[_UART_UUID], but this is likely to make the payload too large.
+        # Optionally add services=[_UART_UUID], but this is likely to make the
+        # payload too large.
         self._payload = advertising_payload(
             name=name, appearance=_ADV_APPEARANCE_GENERIC_COMPUTER)
         self._advertise()
@@ -55,7 +56,7 @@ class BLEUART:
         if event == _IRQ_CENTRAL_CONNECT:
             conn_handle, _, _ = data
             print("_IRQ_CENTRAL_CONNECT")
-            pbt.on() 
+            pbt.on()
             self._connections.add(conn_handle)
         elif event == _IRQ_CENTRAL_DISCONNECT:
             conn_handle, _, _ = data
@@ -112,7 +113,12 @@ _ADV_TYPE_APPEARANCE = const(0x19)
 
 
 # Generate a payload to be passed to gap_advertise(adv_data=...).
-def advertising_payload(limited_disc=False, br_edr=False, name=None, services=None, appearance=0):
+def advertising_payload(
+        limited_disc=False,
+        br_edr=False,
+        name=None,
+        services=None,
+        appearance=0):
     payload = bytearray()
 
     def _append(adv_type, value):
@@ -146,9 +152,8 @@ def advertising_payload(limited_disc=False, br_edr=False, name=None, services=No
 
 
 def demo():
-    print("demo")   
+    print("demo")
 
 
 if __name__ == "__main__":
     demo()
-

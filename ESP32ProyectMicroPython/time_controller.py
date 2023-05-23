@@ -22,22 +22,23 @@ class TimeController:
     def get_fecha_completa_req(self):
         print("Obteniendo la hora de Madrid, España")
         try:
-            response = requests.get("https://timezone.abstractapi.com/v1/current_time/?api_key=1efba11478714b6599e5d95b2b0762f1&location=Madrid,%Spain")
+            response = requests.get(
+                "https://timezone.abstractapi.com/v1/current_time/?api_key=1efba11478714b6599e5d95b2b0762f1&location=Madrid,%Spain")
             if (response.status_code == 200):
                 data = response.json()
                 print("Hora cargada con éxito")
                 return data['datetime']
             else:
                 print("Error en la API, no se pudo obtener la hora")
-        except:
+        except BaseException:
             return "Error al cargar la hora"
 
     def hora_mm_ss(self):
         try:
             return self.fecha_completa[11:16]
-        except:
+        except BaseException:
             return "??"
-    
+
     def set_hora_intervalo(self):
         try:
             hora_actual = self.hora_string[0:2]
@@ -46,7 +47,7 @@ class TimeController:
                 return hora_actual + "-0" + hora_siguiente
             else:
                 return hora_actual + "-" + hora_siguiente
-        except:
+        except BaseException:
             return "??"
 
     def cargar_hora(self):
@@ -55,7 +56,7 @@ class TimeController:
         self.hora_intervalo = self.set_hora_intervalo()
         self.set_hora_RTC_array()
         self.actualizar_reloj_interno()
-    
+
     def set_hora_RTC_array(self):
         year = self.fecha_completa[0:4]
         month = self.fecha_completa[5:7]
@@ -63,7 +64,7 @@ class TimeController:
         weekday = 0
         hour = self.hora_string[0:2]
         minute = self.hora_string[3:5]
-        
+
         self.hora_RTC_array = []
         self.hora_RTC_array.append(int(year))
         self.hora_RTC_array.append(int(month))
@@ -75,7 +76,8 @@ class TimeController:
         self.hora_RTC_array.append(1)
 
     def __str__(self):
-        return (f"""Fecha completa: {self.fecha_completa}\nHora: {self.hora_string}\nIntervalo actual: {self.hora_intervalo}\nHora RTC: {self.hora_RTC_array}""")
+        return (
+            f"""Fecha completa: {self.fecha_completa}\nHora: {self.hora_string}\nIntervalo actual: {self.hora_intervalo}\nHora RTC: {self.hora_RTC_array}""")
 
     def actualizar_reloj_interno(self):
         rtc = RTC()
